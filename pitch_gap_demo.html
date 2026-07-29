@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Pitch Shape vs. Performance — Diagnostic Tool</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Libre+Franklin:wght@400;600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+
+  :root {
+    --bg: #12181F;
+    --panel: #1A222C;
+    --panel-line: #2A3542;
+    --ink: #EDEEF0;
+    --ink-dim: #8C96A3;
+    --field: #4C8C5C;
+    --field-dim: #2E4A35;
+    --rust: #C0546B;
+    --rust-dim: #4A2C33;
+    --gold: #C9A227;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: 'Libre Franklin', sans-serif;
+    padding: 48px 24px 80px;
+  }
+
+  .wrap { max-width: 920px; margin: 0 auto; }
+
+  .eyebrow {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-size: 34px;
+    font-weight: 800;
+    margin: 0 0 8px;
+    letter-spacing: -0.01em;
+  }
+
+  .sub {
+    color: var(--ink-dim);
+    font-size: 15px;
+    max-width: 640px;
+    line-height: 1.5;
+    margin-bottom: 36px;
+  }
+
+  .pipeline {
+    display: flex;
+    align-items: stretch;
+    gap: 0;
+    margin-bottom: 44px;
+    border: 1px solid var(--panel-line);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--panel);
+  }
+
+  .pipe-step {
+    flex: 1;
+    padding: 16px 18px;
+    border-right: 1px solid var(--panel-line);
+  }
+  .pipe-step:last-child { border-right: none; }
+
+  .pipe-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10.5px;
+    color: var(--ink-dim);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    margin-bottom: 6px;
+  }
+
+  .pipe-value {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 15px;
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .auc-tag {
+    color: var(--gold);
+  }
+
+  h2 {
+    font-size: 13px;
+    font-family: 'IBM Plex Mono', monospace;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin: 0 0 18px;
+    padding-top: 6px;
+    border-top: 1px solid var(--panel-line);
+  }
+
+  .pitcher-card {
+    background: var(--panel);
+    border: 1px solid var(--panel-line);
+    border-radius: 10px;
+    padding: 22px 24px 24px;
+    margin-bottom: 18px;
+  }
+
+  .pitcher-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 4px;
+  }
+
+  .pitcher-name {
+    font-size: 18px;
+    font-weight: 600;
+  }
+
+  .command-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 10px 0 4px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+  }
+
+  .command-track {
+    position: relative;
+    flex: 1;
+    max-width: 220px;
+    height: 6px;
+    background: #232C37;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .command-fill {
+    height: 100%;
+    border-radius: 3px;
+  }
+  .command-fill.high { background: var(--field); }
+  .command-fill.mid { background: var(--gold); }
+  .command-fill.low { background: var(--rust); }
+
+  .command-pct {
+    color: var(--ink);
+    font-weight: 600;
+  }
+
+  .pattern-tag {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.06em;
+    padding: 3px 9px;
+    border-radius: 20px;
+    text-transform: uppercase;
+  }
+  .pattern-tag.over { background: var(--field-dim); color: var(--field); }
+  .pattern-tag.under { background: var(--rust-dim); color: var(--rust); }
+  .pattern-tag.neutral { background: #33302088; color: var(--gold); }
+  .pattern-tag.mixed { background: #2A2F3A; color: var(--ink-dim); }
+
+  .pitches {
+    margin: 18px 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+  }
+
+  .pitch-row {
+    display: grid;
+    grid-template-columns: 46px 1fr 64px;
+    align-items: center;
+    gap: 12px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 12.5px;
+  }
+
+  .pitch-code { color: var(--ink-dim); }
+
+  .bar-track {
+    position: relative;
+    height: 8px;
+    background: #232C37;
+    border-radius: 4px;
+    overflow: visible;
+  }
+
+  .bar-expected {
+    position: absolute;
+    top: -3px;
+    height: 14px;
+    width: 2px;
+    background: var(--ink-dim);
+  }
+
+  .bar-actual {
+    height: 8px;
+    border-radius: 4px;
+  }
+  .bar-actual.pos { background: var(--field); }
+  .bar-actual.neg { background: var(--rust); }
+
+  .gap-val { text-align: right; }
+  .gap-val.pos { color: var(--field); }
+  .gap-val.neg { color: var(--rust); }
+
+  .diagnosis {
+    border-top: 1px solid var(--panel-line);
+    padding-top: 14px;
+    margin-top: 14px;
+  }
+
+  .diagnosis-label {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-dim);
+    margin-bottom: 6px;
+  }
+
+  .diagnosis p {
+    margin: 0 0 8px;
+    font-size: 13.5px;
+    line-height: 1.6;
+    color: #D3D7DC;
+  }
+
+  .diagnosis p:last-child { margin-bottom: 0; }
+
+  .diagnosis .rec {
+    color: var(--gold);
+    font-weight: 600;
+  }
+
+  .legend {
+    display: flex;
+    gap: 22px;
+    margin-top: 6px;
+    margin-bottom: 30px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-dim);
+  }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-swatch { width: 12px; height: 12px; border-radius: 3px; }
+
+  footer {
+    margin-top: 40px;
+    padding-top: 20px;
+    border-top: 1px solid var(--panel-line);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11.5px;
+    color: var(--ink-dim);
+    line-height: 1.6;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Pitch Shape vs. Performance</div>
+  <h1>Where "stuff" and results disagree</h1>
+  <div class="sub">
+    A model trained on 116,355 real MLB pitches predicts expected whiff rate from shape alone
+    (velocity, spin, break, extension). Comparing that prediction against actual results — and
+    against location data — separates two different problems: is a pitch underperforming because
+    of its shape, or because of where it's being thrown?
+  </div>
+
+  <div class="pipeline">
+    <div class="pipe-step">
+      <div class="pipe-label">Training Data</div>
+      <div class="pipe-value">116,355 pitches · 531 pitchers</div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-label">Model</div>
+      <div class="pipe-value">Random Forest · AUC <span class="auc-tag">0.61</span></div>
+    </div>
+    <div class="pipe-step">
+      <div class="pipe-label">Validated Against</div>
+      <div class="pipe-value">P. Skenes 2024 (real data)</div>
+    </div>
+  </div>
+
+  <h2>Sample Staff — Predicted vs. Actual Whiff Rate</h2>
+
+  <div class="legend">
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--ink-dim)"></div> Expected (shape-based)</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--field)"></div> Overperforming</div>
+    <div class="legend-item"><div class="legend-swatch" style="background:var(--rust)"></div> Underperforming</div>
+  </div>
+
+  <div id="cards"></div>
+
+  <footer>
+    Miami Baseball Analytics Project — Pitch Shape Diagnostic Tool<br>
+    Data: MLB Statcast (pybaseball) · Model: scikit-learn RandomForestClassifier · Reasoning layer: Claude
+  </footer>
+
+</div>
+
+<script>
+const pitchers = [
+  {
+    name: "Sample Pitcher 1",
+    pattern: "over",
+    patternLabel: "Broad Overperformer",
+    command: 0.848,
+    pitches: [
+      {code:"CH", exp:0.136, act:0.24, gap:0.104},
+      {code:"SL", exp:0.128, act:0.24, gap:0.112},
+      {code:"FF", exp:0.101, act:0.13, gap:0.029},
+      {code:"CU", exp:0.114, act:0.15, gap:0.036},
+    ],
+    diagnosis: "Every pitch beats its shape-based expectation, led by the slider and changeup. The command data confirms why: 84.8% of pitches land in the chase zone — elite location, not just favorable shape. This mirrors the real pattern found in Skenes' actual changeup.",
+    rec: "Protect the current delivery and mechanics. Don't over-coach individual pitch shapes; the value here is command, not raw stuff."
+  },
+  {
+    name: "Sample Pitcher 2",
+    pattern: "under",
+    patternLabel: "Broad Underperformer",
+    command: 0.347,
+    pitches: [
+      {code:"CH", exp:0.136, act:0.05, gap:-0.086},
+      {code:"CU", exp:0.114, act:0.06, gap:-0.054},
+      {code:"SL", exp:0.127, act:0.11, gap:-0.017},
+      {code:"FF", exp:0.100, act:0.13, gap:0.030},
+    ],
+    diagnosis: "The mirror image of Pitcher 1 — nearly every pitch underperforms what shape alone predicts, changeup worst. The command data confirms the cause: only 34.7% chase-zone rate, the worst in the sample. This is a location problem, not a stuff problem.",
+    rec: "Prioritize a location/command evaluation before touching pitch design. Shape is fine on paper — mechanics are the clear lever here."
+  },
+  {
+    name: "Sample Pitcher 3",
+    pattern: "neutral",
+    patternLabel: "Neutral",
+    command: 0.560,
+    pitches: [
+      {code:"CH", exp:0.135, act:0.21, gap:0.075},
+      {code:"FF", exp:0.100, act:0.09, gap:-0.010},
+      {code:"SL", exp:0.127, act:0.10, gap:-0.027},
+      {code:"CU", exp:0.114, act:0.11, gap:-0.004},
+    ],
+    diagnosis: "Small gaps in both directions, largely offsetting — performing close to exactly what shape predicts. Command sits at league-average (56.0% chase zone), consistent with a pitcher getting exactly what his stuff earns, no more, no less.",
+    rec: "Trust-the-process arm. Development should focus on improving raw shape metrics directly, since command isn't adding extra value on top of stuff."
+  },
+  {
+    name: "Sample Pitcher 4",
+    pattern: "mixed",
+    patternLabel: "Mild Overperformer",
+    command: 0.604,
+    pitches: [
+      {code:"SL", exp:0.127, act:0.19, gap:0.063},
+      {code:"CH", exp:0.135, act:0.18, gap:0.045},
+      {code:"CU", exp:0.114, act:0.12, gap:0.006},
+      {code:"FF", exp:0.100, act:0.08, gap:-0.020},
+    ],
+    diagnosis: "Slider stands out well above expectation; fastball is the one exception, slightly underperforming. Above-average command (60.4% chase zone) is contributing to the edge — worth watching if slider usage increases and location regresses under higher workload.",
+    rec: "Lean into the slider more — if underused relative to this gap, increasing usage in swing counts is low-risk upside. Take a closer look at the fastball specifically."
+  },
+  {
+    name: "Sample Pitcher 5",
+    pattern: "mixed",
+    patternLabel: "Mixed",
+    command: 0.455,
+    pitches: [
+      {code:"FF", exp:0.100, act:0.12, gap:0.020},
+      {code:"CH", exp:0.135, act:0.10, gap:-0.035},
+      {code:"CU", exp:0.114, act:0.06, gap:-0.054},
+      {code:"SL", exp:0.128, act:0.07, gap:-0.058},
+    ],
+    diagnosis: "Fastball overperforms while both breaking/off-speed pitches underperform. Overall command is below average (45.5% chase zone), suggesting a broader consistency issue underlies the pitch-specific pattern, not just isolated shape problems.",
+    rec: "Start with a broader mechanics/consistency evaluation, then follow with targeted slider and changeup work — command is likely the more foundational fix."
+  },
+];
+
+const container = document.getElementById('cards');
+
+pitchers.forEach(p => {
+  const card = document.createElement('div');
+  card.className = 'pitcher-card';
+
+  const maxRate = 0.30;
+
+  const cmdClass = p.command >= 0.65 ? 'high' : (p.command >= 0.45 ? 'mid' : 'low');
+  const cmdPct = (p.command * 100).toFixed(1);
+
+  const rowsHtml = p.pitches.map(pt => {
+    const expPct = (pt.exp / maxRate) * 100;
+    const actPct = (pt.act / maxRate) * 100;
+    const gapClass = pt.gap >= 0 ? 'pos' : 'neg';
+    const gapDisplay = (pt.gap >= 0 ? '+' : '') + pt.gap.toFixed(3);
+    return `
+      <div class="pitch-row">
+        <div class="pitch-code">${pt.code}</div>
+        <div class="bar-track">
+          <div class="bar-actual ${gapClass}" style="width:${actPct}%"></div>
+          <div class="bar-expected" style="left:${expPct}%"></div>
+        </div>
+        <div class="gap-val ${gapClass}">${gapDisplay}</div>
+      </div>
+    `;
+  }).join('');
+
+  card.innerHTML = `
+    <div class="pitcher-head">
+      <div class="pitcher-name">${p.name}</div>
+      <div class="pattern-tag ${p.pattern}">${p.patternLabel}</div>
+    </div>
+    <div class="command-row">
+      <span>Command (% in chase zone)</span>
+      <div class="command-track"><div class="command-fill ${cmdClass}" style="width:${cmdPct}%"></div></div>
+      <span class="command-pct">${cmdPct}%</span>
+    </div>
+    <div class="pitches">${rowsHtml}</div>
+    <div class="diagnosis">
+      <div class="diagnosis-label">Diagnosis</div>
+      <p>${p.diagnosis}</p>
+      <p><span class="rec">Recommendation —</span> ${p.rec}</p>
+    </div>
+  `;
+
+  container.appendChild(card);
+});
+</script>
+</body>
+</html>
