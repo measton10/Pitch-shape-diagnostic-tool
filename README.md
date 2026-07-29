@@ -2,6 +2,9 @@
 
 A model that separates *what a pitch's shape predicts* from *what it actually produces* — and when there's a gap, diagnoses whether it's a command problem, a shape problem, or something else entirely. Built as a baseball analytics + AI portfolio project, targeting a student analyst/manager role with Miami University baseball.
 
+<img width="1710" height="1107" alt="Screenshot 2026-07-28 at 10 44 49 PM" src="https://github.com/user-attachments/assets/161e8244-6591-470e-8852-ffb503862055" />
+
+
 ## The idea
 
 Pitching coaches already do this informally: look at a pitch's shape (spin, break, velocity), decide if it "should" be effective, then compare that to what actually happens in games. This project systematizes that process using real MLB Statcast data, and adds a second AI-driven layer — using Claude to turn the numbers into an actual coaching diagnosis and recommendation, not just a stat line.
