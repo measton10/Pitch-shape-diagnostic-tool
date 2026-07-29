@@ -2,7 +2,7 @@
 
 A model that separates *what a pitch's shape predicts* from *what it actually produces* — and when there's a gap, diagnoses whether it's a command problem, a shape problem, or something else entirely. Built as a baseball analytics + AI portfolio project, targeting a student analyst/manager role with Miami University baseball.
 
-<img width="1710" height="700" alt="Screenshot 2026-07-28 at 10 44 49 PM" src="https://github.com/user-attachments/assets/161e8244-6591-470e-8852-ffb503862055" />
+<img width="1710" height="949" alt="Screenshot 2026-07-28 at 10 40 18 PM" src="https://github.com/user-attachments/assets/e7325d07-40c8-43d9-aeae-287ddc60afcf" />
 
 
 ## The idea
