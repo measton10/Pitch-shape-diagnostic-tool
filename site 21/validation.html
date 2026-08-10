@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Validation | Pitch Shape vs. Performance</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap');
+  :root {
+    --bg: #FFFFFF; --bg-alt: #F6F7F9; --border: #E3E6EA;
+    --ink: #1E2430; --ink-dim: #64707D;
+    --accent: #1D4E89; --accent-dim: #EAF1FA;
+    --positive: #1F7A4D; --positive-bg: #E7F5EC;
+    --negative: #B23A48; --negative-bg: #FBEAEC;
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font-family: 'Inter', sans-serif; -webkit-font-smoothing: antialiased; }
+  a { color: inherit; text-decoration: none; }
+  .mono { font-family: 'IBM Plex Mono', monospace; }
+
+  nav { border-bottom: 1px solid var(--border); position: sticky; top: 0; background: rgba(255,255,255,0.95); backdrop-filter: blur(6px); z-index: 10; }
+  .nav-inner { max-width: 1040px; margin: 0 auto; padding: 18px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+  .brand { font-weight: 700; font-size: 15px; letter-spacing: -0.01em; }
+  .nav-links { display: flex; gap: 26px; font-size: 14px; font-weight: 500; }
+  .nav-links a { color: var(--ink-dim); padding-bottom: 4px; border-bottom: 2px solid transparent; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links a.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .wrap { max-width: 1040px; margin: 0 auto; padding: 0 28px; }
+  .page-head { padding: 48px 0 36px; border-bottom: 1px solid var(--border); margin-bottom: 44px; }
+  .eyebrow { font-family: 'IBM Plex Mono', monospace; font-size: 12px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; font-weight: 600; }
+  h1 { font-size: 32px; font-weight: 800; line-height: 1.15; margin: 0 0 12px; letter-spacing: -0.01em; }
+  .page-sub { color: var(--ink-dim); font-size: 15px; max-width: 640px; line-height: 1.65; }
+
+  h2 { font-size: 12.5px; font-family: 'IBM Plex Mono', monospace; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin: 0 0 8px; font-weight: 600; }
+  h3 { font-size: 19px; font-weight: 700; margin: 0 0 4px; }
+  .section-intro { font-size: 14.5px; color: var(--ink-dim); line-height: 1.7; max-width: 680px; margin-bottom: 20px; }
+  section { margin-bottom: 52px; }
+
+  .pitcher-rep { font-size: 13px; color: var(--ink-dim); margin-bottom: 16px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; margin-bottom: 8px; }
+  th { text-align: left; font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.05em; text-transform: uppercase; color: var(--ink-dim); padding: 10px 14px; border-bottom: 1px solid var(--border); background: var(--bg-alt); }
+  td { padding: 12px 14px; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  .pos { color: var(--positive); font-weight: 600; }
+  .neg { color: var(--negative); font-weight: 600; }
+
+  .grade-pill { display: inline-block; font-family: 'IBM Plex Mono', monospace; font-weight: 700; padding: 3px 10px; border-radius: 20px; font-size: 12.5px; }
+  .grade-pill.elite { background: var(--positive-bg); color: var(--positive); }
+  .grade-pill.avg { background: var(--bg-alt); color: var(--ink-dim); border: 1px solid var(--border); }
+  .grade-pill.low { background: var(--negative-bg); color: var(--negative); }
+
+  .conf-tag { font-family: 'IBM Plex Mono', monospace; font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600; }
+  .conf-high { background: var(--positive-bg); color: var(--positive); }
+  .conf-low { background: var(--negative-bg); color: var(--negative); }
+
+  .note { font-size: 13px; color: var(--ink-dim); line-height: 1.6; margin-top: 8px; }
+  .pitcher-block { margin-bottom: 32px; padding: 28px 30px; border: 1px solid var(--border); border-radius: 12px; background: #FEFEFE; }
+  .subsection-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--ink-dim); margin: 22px 0 10px; padding-top: 20px; border-top: 1px solid var(--border); }
+  .subsection-label:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
+
+  .grade-chart { margin: 18px 0 24px; }
+  .grade-row { display: grid; grid-template-columns: 60px 1fr 50px; align-items: center; gap: 12px; padding: 7px 0; }
+  .grade-label { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); }
+  .grade-track { position: relative; height: 8px; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 4px; }
+  .grade-center { position: absolute; left: 50%; top: -3px; width: 1px; height: 14px; background: var(--ink-dim); }
+  .grade-fill { position: absolute; top: 0; height: 100%; border-radius: 3px; }
+  .grade-fill.pos { background: var(--positive); }
+  .grade-fill.neg { background: var(--negative); }
+  .grade-value { font-family: 'IBM Plex Mono', monospace; font-size: 13px; font-weight: 700; text-align: right; }
+  .grade-scale-labels { display: grid; grid-template-columns: 60px 1fr 50px; font-family: 'IBM Plex Mono', monospace; font-size: 10px; color: var(--ink-dim); margin-bottom: 4px; }
+  .grade-scale-labels .mid { text-align: center; }
+
+  .viz-box { background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px; padding: 20px; margin: 20px 0; }
+  .viz-caption { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-dim); margin-top: 10px; text-align: center; }
+  .viz-lead { font-size: 13.5px; color: var(--ink-dim); line-height: 1.6; margin-bottom: 14px; }
+
+  .table-box { background: #ffffff; border: 1px solid var(--border); border-radius: 10px; padding: 18px 20px; margin: 14px 0 20px; }
+  .table-box table { margin-bottom: 0; }
+
+  .platoon-card { border: 1px solid var(--border); border-radius: 10px; padding: 20px 22px; margin-bottom: 14px; background: #FEFEFE; }
+  .platoon-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+  .split-row { display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; gap: 14px; margin-bottom: 12px; }
+  .split-side { text-align: center; padding: 14px 10px; border-radius: 8px; }
+  .split-side.weak { background: var(--negative-bg); }
+  .split-side.strong { background: var(--positive-bg); }
+  .split-label { font-family: 'IBM Plex Mono', monospace; font-size: 10.5px; color: var(--ink-dim); margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.05em; }
+  .split-num { font-family: 'IBM Plex Mono', monospace; font-size: 28px; font-weight: 800; line-height: 1; }
+  .split-num.weak { color: var(--negative); }
+  .split-num.strong { color: var(--positive); }
+  .split-sub { font-size: 10.5px; color: var(--ink-dim); margin-top: 4px; }
+  .vs-divider { font-family: 'IBM Plex Mono', monospace; font-size: 12px; color: var(--ink-dim); font-weight: 700; }
+  .platoon-explain { font-size: 13px; line-height: 1.6; color: var(--ink); }
+
+  .cap-dot { cursor: pointer; transition: r 0.1s ease; }
+  .cap-dot:hover { stroke: var(--ink); stroke-width: 2; }
+  .cap-info-panel { margin-top: 14px; padding: 14px 18px; background: var(--bg-alt); border: 1px solid var(--border); border-radius: 8px; min-height: 24px; }
+  .cap-info-empty { font-size: 13px; color: var(--ink-dim); }
+  .cap-info-row { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .cap-info-name { font-size: 14px; font-weight: 700; }
+  .cap-info-stat .label { font-family: 'IBM Plex Mono', monospace; font-size: 10px; text-transform: uppercase; color: var(--ink-dim); }
+  .cap-info-stat .value { font-family: 'IBM Plex Mono', monospace; font-size: 15px; font-weight: 700; }
+  .legend-row { display: flex; gap: 16px; flex-wrap: wrap; font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-dim); margin-bottom: 10px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; }
+  .legend-dot { width: 9px; height: 9px; border-radius: 50%; }
+  .takeaway { margin-top: 14px; padding: 12px 16px; background: #E7F5EC; border-left: 3px solid var(--positive); font-size: 13.5px; line-height: 1.6; border-radius: 4px; }
+  .takeaway strong { color: var(--positive); }
+
+  footer { margin-top: 60px; padding: 28px 0; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--ink-dim); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="brand">Pitch Shape vs. Performance</div>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="methodology.html">Methodology</a>
+      <a href="validation.html" class="active">Validation</a>
+      <a href="recommendations.html">Recommendations</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+  <div class="page-head">
+    <div class="eyebrow">03 &nbsp;—&nbsp; Does It Actually Work?</div>
+    <h1>Validation</h1>
+    <div class="page-sub">Tested against three real MLB pitchers, chosen specifically for their different, well-known reputations. Each pitch is graded across four models — whiff, hard-hit, ground ball, and barrel rate — plus real platoon splits by batter handedness. Every grade below is relative to the entire league, not just these three pitchers: <strong style="color: var(--ink);">100 is league average</strong>, higher is better, lower is worse.</div>
+  </div>
+
+  <section>
+    <div class="pitcher-block">
+      <h3>Paul Skenes (Pirates) — the swing-and-miss ace</h3>
+      <div class="pitcher-rep">Real-world reputation: elite changeup, among the most dominant young starters in baseball</div>
+
+      <div class="subsection-label">Grade at a Glance</div>
+      <div class="table-box">
+        <div class="viz-lead">Each bar shows how far above or below league average (100) this pitch grades — green bars beat expectation, red bars fall short.</div>
+        <div class="grade-chart">
+          <div class="grade-scale-labels"><span>Pitch</span><span class="mid">70 &nbsp;·&nbsp; average (100) &nbsp;·&nbsp; 130</span><span>Grade</span></div>
+          <div class="grade-row"><div class="grade-label">CH</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:35.0%;"></div></div><div class="grade-value pos">121</div></div>
+          <div class="grade-row"><div class="grade-label">FS</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:11.7%;"></div></div><div class="grade-value pos">107</div></div>
+          <div class="grade-row"><div class="grade-label">SL</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:5.0%;"></div></div><div class="grade-value pos">103</div></div>
+          <div class="grade-row"><div class="grade-label">FF</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:3.3%;"></div></div><div class="grade-value">102</div></div>
+          <div class="grade-row"><div class="grade-label">CU</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:1.7%;"></div></div><div class="grade-value">101</div></div>
+          <div class="grade-row"><div class="grade-label">ST</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:46.7%; width:3.3%;"></div></div><div class="grade-value">98</div></div>
+        </div>
+      </div>
+
+      <div class="subsection-label">Full Breakdown</div>
+      <div class="viz-lead">Four separate models feed the grade: whiff (misses bats), hard-hit (contact quality), ground ball (batted-ball angle), and barrel (MLB's official damaging-contact standard).</div>
+      <div class="table-box">
+        <table>
+          <tr><th>Pitch</th><th>Whiff</th><th>Hard-Hit</th><th>Ground Ball</th><th>Barrel</th><th>Grade</th></tr>
+          <tr><td>Changeup</td><td class="mono pos">+0.143</td><td class="mono pos">-0.199</td><td class="mono">+0.086</td><td class="mono pos">-0.062</td><td><span class="grade-pill elite">121</span></td></tr>
+          <tr><td>Splitter</td><td class="mono pos">+0.031</td><td class="mono">+0.002</td><td class="mono">+0.133</td><td class="mono pos">-0.038</td><td><span class="grade-pill elite">107</span></td></tr>
+          <tr><td>Slider</td><td class="mono pos">+0.007</td><td class="mono pos">-0.100</td><td class="mono">+0.073</td><td class="mono neg">+0.047</td><td><span class="grade-pill avg">103</span></td></tr>
+          <tr><td>Fastball</td><td class="mono pos">+0.005</td><td class="mono pos">-0.025</td><td class="mono">-0.028</td><td class="mono pos">-0.012</td><td><span class="grade-pill avg">102</span></td></tr>
+          <tr><td>Curveball</td><td class="mono neg">-0.011</td><td class="mono pos">-0.019</td><td class="mono">-0.018</td><td class="mono pos">-0.042</td><td><span class="grade-pill avg">101</span></td></tr>
+          <tr><td>Sweeper</td><td class="mono neg">-0.039</td><td class="mono pos">-0.036</td><td class="mono">-0.161</td><td class="mono pos">-0.040</td><td><span class="grade-pill avg">98</span></td></tr>
+        </table>
+      </div>
+      <p class="note">
+        The changeup is Skenes' best pitch by a wide margin, and command is the reason why. Once barrel rate
+        is factored in, the sweeper turns out closer to average than it first appeared — the slider is now
+        the pitch worth watching most closely.
+      </p>
+
+      <div class="subsection-label">Lefty vs. Righty Splits</div>
+      <div class="viz-lead">Only the pitches with the most notable difference are shown below — his other pitches didn't show a meaningful split.</div>
+
+      <div class="platoon-card">
+        <div class="platoon-title">Sweeper — Whiff Rate by Batter Side</div>
+        <div class="split-row">
+          <div class="split-side weak">
+            <div class="split-label">vs. Lefties</div>
+            <div class="split-num weak">0%</div>
+            <div class="split-sub">0 whiffs in 50 pitches</div>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class="split-side strong">
+            <div class="split-label">vs. Righties</div>
+            <div class="split-num strong">11.7%</div>
+            <div class="split-sub">normal performance</div>
+          </div>
+        </div>
+        <div class="platoon-explain">This pitch hasn't missed a single bat against a left-handed hitter all season, while performing normally against righties.</div>
+      </div>
+
+      <div class="platoon-card">
+        <div class="platoon-title">Slider — Whiff Rate by Batter Side</div>
+        <div class="split-row">
+          <div class="split-side strong">
+            <div class="split-label">vs. Lefties</div>
+            <div class="split-num strong">24.4%</div>
+            <div class="split-sub">well above average</div>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class="split-side weak">
+            <div class="split-label">vs. Righties</div>
+            <div class="split-num weak">8.8%</div>
+            <div class="split-sub">below average</div>
+          </div>
+        </div>
+        <div class="platoon-explain">The opposite pattern from the sweeper above — nearly three times more effective against lefties than righties.</div>
+      </div>
+    </div>
+
+    <div class="pitcher-block">
+      <h3>Framber Valdez (Astros) — the contact-management sinkerballer</h3>
+      <div class="pitcher-rep">Real-world reputation: elite groundball pitcher, not a strikeout arm — success comes from weak contact and grounders</div>
+      <div class="subsection-label">Grade at a Glance</div>
+      <div class="table-box">
+        <div class="viz-lead">Each bar shows how far above or below league average (100) this pitch grades — green bars beat expectation, red bars fall short.</div>
+        <div class="grade-chart">
+          <div class="grade-scale-labels"><span>Pitch</span><span class="mid">70 &nbsp;·&nbsp; average (100) &nbsp;·&nbsp; 130</span><span>Grade</span></div>
+          <div class="grade-row"><div class="grade-label">CU</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:25.0%;"></div></div><div class="grade-value pos">115</div></div>
+          <div class="grade-row"><div class="grade-label">CH</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill pos" style="left:50%; width:18.3%;"></div></div><div class="grade-value pos">111</div></div>
+          <div class="grade-row"><div class="grade-label">FF</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:45.0%; width:5.0%;"></div></div><div class="grade-value">97 <span class="conf-tag conf-low" style="margin-left:4px;">low n</span></div></div>
+          <div class="grade-row"><div class="grade-label">SL</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:46.7%; width:3.3%;"></div></div><div class="grade-value">98</div></div>
+          <div class="grade-row"><div class="grade-label">SI</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:41.7%; width:8.3%;"></div></div><div class="grade-value">95</div></div>
+        </div>
+      </div>
+      <div class="subsection-label">Full Breakdown</div>
+      <div class="viz-lead">Four separate models feed the grade: whiff (misses bats), hard-hit (contact quality), ground ball (batted-ball angle), and barrel (MLB's official damaging-contact standard).</div>
+      <div class="table-box">
+        <table>
+          <tr><th>Pitch</th><th>Whiff</th><th>Hard-Hit</th><th>Ground Ball</th><th>Barrel</th><th>Grade</th></tr>
+          <tr><td>Curveball</td><td class="mono pos">+0.015</td><td class="mono pos">-0.036</td><td class="mono">+0.185</td><td class="mono pos">-0.070</td><td><span class="grade-pill elite">115</span></td></tr>
+          <tr><td>Changeup</td><td class="mono pos">+0.045</td><td class="mono pos">-0.013</td><td class="mono">+0.194</td><td class="mono pos">-0.058</td><td><span class="grade-pill elite">111</span></td></tr>
+          <tr><td>Fastball <span class="conf-tag conf-low">low confidence</span></td><td class="mono neg">-0.027</td><td class="mono">n/a</td><td class="mono">n/a</td><td class="mono">n/a</td><td><span class="grade-pill avg">97</span></td></tr>
+          <tr><td>Slider</td><td class="mono pos">+0.036</td><td class="mono neg">+0.080</td><td class="mono">+0.075</td><td class="mono neg">+0.040</td><td><span class="grade-pill avg">98</span></td></tr>
+          <tr><td>Sinker</td><td class="mono neg">-0.018</td><td class="mono neg">+0.090</td><td class="mono">+0.082</td><td class="mono">+0.015</td><td><span class="grade-pill avg">95</span></td></tr>
+        </table>
+      </div>
+      <p class="note">
+        The curveball is Valdez's true signature weapon, grading highest of his arsenal. The sinker looks
+        weak by whiff rate alone, but it induces far more ground balls than expected — which is what actually
+        matters for a pitch designed to limit damage rather than miss bats.
+      </p>
+
+      <div class="subsection-label">Lefty vs. Righty Splits</div>
+      <div class="viz-lead">Only the pitches with the most notable difference are shown below — his other pitches didn't show a meaningful split.</div>
+
+      <div class="platoon-card">
+        <div class="platoon-title">Changeup — Whiff Rate by Batter Side</div>
+        <div class="split-row">
+          <div class="split-side strong">
+            <div class="split-label">vs. Lefties</div>
+            <div class="split-num strong">31.4%</div>
+            <div class="split-sub">elite</div>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class="split-side weak">
+            <div class="split-label">vs. Righties</div>
+            <div class="split-num weak">16.8%</div>
+            <div class="split-sub">still above average</div>
+          </div>
+        </div>
+        <div class="platoon-explain">Nearly double the whiff rate against lefties compared to righties — the classic pattern of a same-handed pitcher's changeup playing up against opposite-handed hitters.</div>
+      </div>
+
+    </div>
+
+    <div class="pitcher-block">
+      <h3>Kyle Hendricks (Cubs) — a real, documented decline</h3>
+      <div class="pitcher-rep">Real-world reputation: command-over-stuff "professor" type, but had a genuinely poor 2024 (10.57 ERA through 7 starts, demoted to the bullpen)</div>
+      <div class="subsection-label">Grade at a Glance</div>
+      <div class="table-box">
+        <div class="viz-lead">Each bar shows how far above or below league average (100) this pitch grades — green bars beat expectation, red bars fall short.</div>
+        <div class="grade-chart">
+          <div class="grade-scale-labels"><span>Pitch</span><span class="mid">70 &nbsp;·&nbsp; average (100) &nbsp;·&nbsp; 130</span><span>Grade</span></div>
+          <div class="grade-row"><div class="grade-label">CH</div><div class="grade-track"><div class="grade-center"></div></div><div class="grade-value">100</div></div>
+          <div class="grade-row"><div class="grade-label">CU</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:48.3%; width:1.7%;"></div></div><div class="grade-value">99</div></div>
+          <div class="grade-row"><div class="grade-label">SI</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:43.3%; width:6.7%;"></div></div><div class="grade-value">96</div></div>
+          <div class="grade-row"><div class="grade-label">FF</div><div class="grade-track"><div class="grade-center"></div><div class="grade-fill neg" style="left:35.0%; width:15.0%;"></div></div><div class="grade-value neg">91</div></div>
+        </div>
+      </div>
+      <div class="subsection-label">Full Breakdown</div>
+      <div class="viz-lead">Four separate models feed the grade: whiff (misses bats), hard-hit (contact quality), ground ball (batted-ball angle), and barrel (MLB's official damaging-contact standard).</div>
+      <div class="table-box">
+        <table>
+          <tr><th>Pitch</th><th>Whiff</th><th>Hard-Hit</th><th>Ground Ball</th><th>Barrel</th><th>Grade</th></tr>
+          <tr><td>Changeup</td><td class="mono neg">-0.009</td><td class="mono pos">-0.073</td><td class="mono">+0.000</td><td class="mono pos">-0.013</td><td><span class="grade-pill avg">100</span></td></tr>
+          <tr><td>Curveball</td><td class="mono neg">-0.043</td><td class="mono pos">-0.025</td><td class="mono">-0.081</td><td class="mono pos">-0.070</td><td><span class="grade-pill avg">99</span></td></tr>
+          <tr><td>Sinker</td><td class="mono neg">-0.023</td><td class="mono pos">-0.017</td><td class="mono">-0.048</td><td class="mono">+0.003</td><td><span class="grade-pill avg">96</span></td></tr>
+          <tr><td>Fastball</td><td class="mono neg">-0.022</td><td class="mono pos">-0.016</td><td class="mono">-0.042</td><td class="mono neg">+0.126</td><td><span class="grade-pill low">91</span></td></tr>
+        </table>
+      </div>
+      <p class="note">
+        Every pitch underperforms on whiff rate, matching his real, rough season — but the barrel model
+        points to a precise cause: his fastball is barreled at more than double its predicted rate, the
+        largest gap found anywhere in this project.
+      </p>
+
+      <div class="subsection-label">Lefty vs. Righty Splits</div>
+      <div class="viz-lead">Only the pitches with the most notable difference are shown below — his other pitches didn't show a meaningful split.</div>
+
+      <div class="platoon-card">
+        <div class="platoon-title">Fastball — Whiff Gap by Batter Side</div>
+        <div class="split-row">
+          <div class="split-side weak">
+            <div class="split-label">vs. Lefties</div>
+            <div class="split-num weak">-5.7%</div>
+            <div class="split-sub">below prediction</div>
+          </div>
+          <div class="vs-divider">vs</div>
+          <div class="split-side strong">
+            <div class="split-label">vs. Righties</div>
+            <div class="split-num strong">+6.7%</div>
+            <div class="split-sub">beats prediction</div>
+          </div>
+        </div>
+        <div class="platoon-explain">The fastball trouble is concentrated specifically against left-handed batters — it actually outperforms its shape against righties.</div>
+      </div>
+    </div>
+  </section>
+
+  <section style="padding-top: 8px; border-top: 3px solid var(--accent); margin-top: 8px;">
+    <div style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.1em; margin: 20px 0 6px; font-weight: 600;">Zooming Out</div>
+    <h2>The Pattern Across All Three Pitchers</h2>
+    <p class="section-intro">
+      Each pitcher above tells their own story — but does command actually predict performance as a general
+      rule, or did we just get lucky with Skenes' changeup? Plotting every single validated pitch from all
+      three pitchers together answers that directly.
+    </p>
+    <div class="viz-box">
+      <div class="legend-row">
+        <div class="legend-item"><span class="legend-dot" style="background:#1D4E89;"></span> Skenes</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#1F7A4D;"></span> Valdez</div>
+        <div class="legend-item"><span class="legend-dot" style="background:#B23A48;"></span> Hendricks</div>
+      </div>
+      <svg viewBox="0 0 460 400" style="width:100%; height:auto; max-width:480px; display:block; margin:0 auto;">
+        <rect x="50" y="30" width="360" height="300" fill="#ffffff"/>
+        <line x1="50" y1="292.5" x2="410" y2="292.5" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,3"/>
+        <text x="415" y="296" font-family="IBM Plex Mono, monospace" font-size="10" fill="var(--ink-dim)">no gap</text>
+
+        <text x="60" y="45" font-family="Inter" font-size="11" fill="var(--ink-dim)">beats prediction ↑</text>
+        <text x="60" y="325" font-family="Inter" font-size="11" fill="var(--ink-dim)">misses prediction ↓</text>
+
+        <circle class="cap-dot" data-pitcher="Paul Skenes" data-pitch="Changeup" data-chase="78.9" data-gap="+14.3" cx="370.1" cy="40.5" r="7" fill="#1D4E89" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Paul Skenes" data-pitch="Slider" data-chase="61.4" data-gap="+0.7" cx="255.5" cy="244.5" r="7" fill="#1D4E89" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Paul Skenes" data-pitch="Splitter" data-chase="50.9" data-gap="+3.1" cx="186.7" cy="208.5" r="7" fill="#1D4E89" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Paul Skenes" data-pitch="Fastball" data-chase="41.1" data-gap="+0.5" cx="122.7" cy="247.5" r="7" fill="#1D4E89" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Paul Skenes" data-pitch="Curveball" data-chase="53.0" data-gap="-1.1" cx="200.5" cy="271.5" r="7" fill="#1D4E89" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Paul Skenes" data-pitch="Sweeper" data-chase="53.8" data-gap="-3.9" cx="205.7" cy="313.5" r="7" fill="#1D4E89" onclick="showCapInfo(this)"/>
+
+        <circle class="cap-dot" data-pitcher="Framber Valdez" data-pitch="Sinker" data-chase="38.1" data-gap="-1.8" cx="103.0" cy="282" r="7" fill="#1F7A4D" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Framber Valdez" data-pitch="Curveball" data-chase="63.4" data-gap="+1.5" cx="268.6" cy="232.5" r="7" fill="#1F7A4D" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Framber Valdez" data-pitch="Changeup" data-chase="58.5" data-gap="+4.5" cx="236.5" cy="187.5" r="7" fill="#1F7A4D" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Framber Valdez" data-pitch="Slider" data-chase="52.8" data-gap="+3.6" cx="199.2" cy="201" r="7" fill="#1F7A4D" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Framber Valdez" data-pitch="Fastball" data-chase="53.3" data-gap="-2.7" cx="202.5" cy="295.5" r="7" fill="#1F7A4D" onclick="showCapInfo(this)"/>
+
+        <circle class="cap-dot" data-pitcher="Kyle Hendricks" data-pitch="Changeup" data-chase="57.4" data-gap="-0.9" cx="229.3" cy="268.5" r="7" fill="#B23A48" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Kyle Hendricks" data-pitch="Sinker" data-chase="43.6" data-gap="-2.3" cx="139.0" cy="289.5" r="7" fill="#B23A48" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Kyle Hendricks" data-pitch="Curveball" data-chase="51.6" data-gap="-4.2" cx="191.4" cy="318" r="7" fill="#B23A48" onclick="showCapInfo(this)"/>
+        <circle class="cap-dot" data-pitcher="Kyle Hendricks" data-pitch="Fastball" data-chase="60.4" data-gap="-2.2" cx="249.0" cy="288" r="7" fill="#B23A48" onclick="showCapInfo(this)"/>
+
+        <text x="230" y="360" font-family="Inter" font-size="11" fill="var(--ink-dim)" text-anchor="middle">← worse command &nbsp;&nbsp;&nbsp; better command →</text>
+      </svg>
+      <div class="cap-info-panel" id="capInfoPanel">
+        <div class="cap-info-empty">Click any dot above to see which pitcher and pitch it represents.</div>
+      </div>
+      <div class="takeaway"><strong>What this shows —</strong> the dots generally climb from bottom-left to top-right across all three pitchers, not just Skenes. Better command tends to mean bigger overperformance as a general pattern, not a one-pitcher coincidence — though it's not a perfect line (see Hendricks' curveball), which is the honest, real picture.</div>
+    </div>
+
+    <script>
+      function showCapInfo(el) {
+        document.querySelectorAll('.cap-dot').forEach(d => d.setAttribute('r', '7'));
+        el.setAttribute('r', '9');
+
+        const pitcher = el.dataset.pitcher;
+        const pitch = el.dataset.pitch;
+        const chase = el.dataset.chase;
+        const gap = el.dataset.gap;
+        const gapClass = gap.startsWith('+') ? 'pos' : 'neg';
+
+        document.getElementById('capInfoPanel').innerHTML = `
+          <div class="cap-info-row">
+            <div class="cap-info-name">${pitcher} — ${pitch}</div>
+            <div class="cap-info-stat"><div class="label">Chase Zone</div><div class="value">${chase}%</div></div>
+            <div class="cap-info-stat"><div class="label">Gap</div><div class="value ${gapClass}">${gap}%</div></div>
+          </div>
+        `;
+      }
+    </script>
+
+  </section>
+
+  <section>
+    <h2>Confidence & Reliability</h2>
+    <p class="section-intro">
+      Not every number deserves equal trust. A gap based on 15 pitches is far less reliable than one based
+      on 1,000+. Every result carries a confidence label based on sample size: under 30 pitches = low
+      confidence, 30–99 = moderate, 100+ = high confidence.
+    </p>
+    <table>
+      <tr><th>Result</th><th>Sample Size</th><th>Confidence</th></tr>
+      <tr><td>Skenes — Changeup</td><td class="mono">114 pitches</td><td><span class="conf-tag conf-high">HIGH</span></td></tr>
+      <tr><td>Valdez — Sinker</td><td class="mono">1,123 pitches</td><td><span class="conf-tag conf-high">HIGH</span></td></tr>
+      <tr><td>Valdez — Fastball</td><td class="mono">15 pitches</td><td><span class="conf-tag conf-low">LOW</span></td></tr>
+      <tr><td>Hendricks — Curveball</td><td class="mono">277 pitches</td><td><span class="conf-tag conf-high">HIGH</span></td></tr>
+    </table>
+  </section>
+
+  <footer>
+    Data: MLB Statcast via pybaseball &nbsp;·&nbsp; Models: scikit-learn RandomForestClassifier
+  </footer>
+</div>
+
+</body>
+</html>
